@@ -37,6 +37,7 @@ void setup()
   setup_input_esp32_button();
 
   setup_mp3_audio();
+  setup_fm_tx();
 
   Wire.begin();        // join i2c bus (address optional for master)
   setup_input_gamepad();

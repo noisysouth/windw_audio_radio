@@ -1,7 +1,14 @@
 // ----------------------- mp3 sound output ----------------------------
-//#define USE_MP3_AUDIO
+#define USE_MP3_AUDIO
+#define MP3_PRINT_DIR
+
 #ifdef USE_MP3_AUDIO
 # include <Adafruit_VS1053.h> // for mp3 playing from microSD card; wants same pins as (HX8357) 3.5" sTFT? (16, 15, 0, 2)
+# include <SD.h>
+
+# ifdef MP3_PRINT_DIR
+File mp3_dir;
+# endif
 #endif
 
 // Couldn't find MP3 sound output module (VS1053) - no sound output will be used. Check the right pins are defined?
@@ -74,13 +81,15 @@ Adafruit_VS1053_FilePlayer musicPlayer =
 #endif
 
 // ---------------------- MP3 sound output: list SD card files ------------------
-#ifdef USE_MP3_AUDIO
+#if defined USE_MP3_AUDIO && defined MP3_PRINT_DIR
 /// File listing helper
 // print files on SD card, which should include sound files for this game
-void mp3_audio_printDirectory(File dir, int numTabs) {
+//void mp3_audio_printDirectory(File dir, int numTabs) {
+void mp3_audio_printDirectory(int numTabs) {
    while(true) {
 
-     File entry =  dir.openNextFile();
+     //File entry =  dir.openNextFile();
+     File entry =  mp3_dir.openNextFile();
      if (! entry) {
        // no more files
        //Serial.println("**nomorefiles**");
@@ -92,7 +101,7 @@ void mp3_audio_printDirectory(File dir, int numTabs) {
      Serial.print(entry.name());
      if (entry.isDirectory()) {
        Serial.println("/");
-       mp3_audio_printDirectory(entry, numTabs+1);
+       //mp3_audio_printDirectory(entry, numTabs+1);
      } else {
        // files have sizes, directories do not
        Serial.print("\t\t");
@@ -128,8 +137,12 @@ void setup_mp3_audio(void) {
   if (mp3_found) {
     Serial.println(F("MP3 sound SD card is OK!"));
 
+#ifdef MP3_PRINT_DIR
     // list files
-    mp3_audio_printDirectory(SD.open("/"), 0);
+    mp3_dir = SD.open("/");
+    //mp3_audio_printDirectory(SD.open("/"), 0);
+    mp3_audio_printDirectory(0);
+#endif
 
     // Set volume for left, right channels. lower numbers == louder volume!
     musicPlayer.setVolume(10,10);

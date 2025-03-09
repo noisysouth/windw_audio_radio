@@ -357,7 +357,7 @@ void setup_app_screens(void) {
   //  GPS status / No GPS button
   SetupButton (&btn_gps, /*x*/24, /*y*/102, "starting GPS", /*void cb_func(void)*/&cb_app_gps_clicked); // force button to be big enough for text
 
-  app_prefs_get (app_settings);
+  app_settings_get (app_settings);
   set_net_label (app_settings->ssid);
 
   SetEdit     (&edit_pass,   app_settings->password);
@@ -457,19 +457,19 @@ void cb_passwd_ok_clicked (void) {
 // ---------------------------- Offset Screen functions --------------------------
 void cb_offs_tzone_set (double tzone_hrs) {
  app_settings->gmt_offset_hours = tzone_hrs; 
- app_prefs_put (app_settings);
+ app_settings_put (app_settings);
  app_time_set();
 }
 
 void cb_offs_dst_set (int dst_checked) {
  app_settings->daylight_observed = dst_checked; 
- app_prefs_put (app_settings);
+ app_settings_put (app_settings);
  app_time_set();
 }
 
 void cb_offs_leapsec_set (double leapsec_in) {
  app_settings->leap_sec = leapsec_in; 
- app_prefs_put (app_settings);
+ app_settings_put (app_settings);
  app_time_set();
 }
 
@@ -482,7 +482,7 @@ void cb_offs_ok_clicked (void) {
 
 void cb_disp_bright_set (double bright_steps) {
  app_settings->bright_steps = bright_steps; 
- app_prefs_put (app_settings);
+ app_settings_put (app_settings);
  //sevenseg_bright_set ();
 }
 
@@ -660,7 +660,7 @@ void app_update(void) {
       set_ip_btn ("%d.%d.%d.%d", my_ip_addr[0], my_ip_addr[1], my_ip_addr[2], my_ip_addr[3]);
 
       // save successful WiFi ssid and password.
-      app_prefs_put (app_settings);
+      app_settings_put (app_settings);
 #ifdef OTA_UPDATE
       over_the_air_update_setup ();
 #endif

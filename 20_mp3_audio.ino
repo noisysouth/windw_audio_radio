@@ -5,10 +5,6 @@
 #ifdef USE_MP3_AUDIO
 # include <Adafruit_VS1053.h> // for mp3 playing from microSD card; wants same pins as (HX8357) 3.5" sTFT? (16, 15, 0, 2)
 # include <SD.h>
-
-# ifdef MP3_PRINT_DIR
-File mp3_dir;
-# endif
 #endif
 
 // Couldn't find MP3 sound output module (VS1053) - no sound output will be used. Check the right pins are defined?
@@ -80,16 +76,16 @@ Adafruit_VS1053_FilePlayer musicPlayer =
   Adafruit_VS1053_FilePlayer(VS1053_RESET, VS1053_CS, VS1053_DCS, VS1053_DREQ, CARDCS);
 #endif
 
+namespace SDLib { // needed, to differentiate from Adafruit_LittleFS_Namespace::File
+
 // ---------------------- MP3 sound output: list SD card files ------------------
 #if defined USE_MP3_AUDIO && defined MP3_PRINT_DIR
 /// File listing helper
 // print files on SD card, which should include sound files for this game
-//void mp3_audio_printDirectory(File dir, int numTabs) {
-void mp3_audio_printDirectory(int numTabs) {
+void mp3_audio_printDirectory(File dir, int numTabs) {
    while(true) {
 
-     //File entry =  dir.openNextFile();
-     File entry =  mp3_dir.openNextFile();
+     File entry =  dir.openNextFile();
      if (! entry) {
        // no more files
        //Serial.println("**nomorefiles**");
@@ -101,7 +97,7 @@ void mp3_audio_printDirectory(int numTabs) {
      Serial.print(entry.name());
      if (entry.isDirectory()) {
        Serial.println("/");
-       //mp3_audio_printDirectory(entry, numTabs+1);
+       mp3_audio_printDirectory(entry, numTabs+1);
      } else {
        // files have sizes, directories do not
        Serial.print("\t\t");
@@ -111,6 +107,8 @@ void mp3_audio_printDirectory(int numTabs) {
    }
 }
 #endif
+
+} // end namespace SDLib
 
 // ------------------ setup ------------------
 void setup_mp3_audio(void) {
@@ -139,9 +137,7 @@ void setup_mp3_audio(void) {
 
 #ifdef MP3_PRINT_DIR
     // list files
-    mp3_dir = SD.open("/");
-    //mp3_audio_printDirectory(SD.open("/"), 0);
-    mp3_audio_printDirectory(0);
+    mp3_audio_printDirectory(SD.open("/"), 0);
 #endif
 
     // Set volume for left, right channels. lower numbers == louder volume!

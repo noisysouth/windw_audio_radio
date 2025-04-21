@@ -173,52 +173,73 @@ struct ctrl_screen_s disp_screen = {
 };
 
 
-// *** gps screen ***
-struct label_s lbl_hdr_gps;
+// *** FM screen ***
+struct label_s lbl_hdr_fm;
 
-struct label_s lbl_datetime;
-struct label_s lbl_fixqual;
-struct label_s lbl_fix3d;
-struct label_s lbl_sats;
+struct check_box_s cb_tx_enab;
 
-struct button_s btn_ok_gps;
+struct up_down_s updn_freq;
 
-struct tab_ctrl_s tab_ctrl_hdr_gps = 
-      { ctrl_label, &lbl_hdr_gps, };
+struct label_s lbl_station;
+struct edit_s edit_rds_station;
 
-struct tab_ctrl_s tab_ctrl_datetime = 
-      { ctrl_label, &lbl_datetime, };
+struct label_s lbl_message;
+struct edit_s edit_rds_message;
 
-struct tab_ctrl_s tab_ctrl_fixqual = 
-      { ctrl_label, &lbl_fixqual, };
+struct button_s btn_ok_fm;
 
-struct tab_ctrl_s tab_ctrl_fix3d = 
-      { ctrl_label, &lbl_fix3d, };
-
-struct tab_ctrl_s tab_ctrl_sats = 
-      { ctrl_label, &lbl_sats, };
-
-struct tab_ctrl_s tab_ctrl_ok_gps = 
-      { ctrl_button, &btn_ok_gps, };
+struct tab_ctrl_s tab_ctrl_hdr_fm = 
+      { ctrl_label, &lbl_hdr_fm, };
 
 
-struct tab_ctrl_s *ctrls_gps[] =
+struct tab_ctrl_s tab_ctrl_tx_enab = 
+      { ctrl_check_box, &cb_tx_enab, };
+
+
+struct tab_ctrl_s tab_ctrl_freq = 
+      { ctrl_up_down, &updn_freq, };
+
+
+struct tab_ctrl_s tab_ctrl_station = 
+      { ctrl_label, &lbl_station, };
+
+struct tab_ctrl_s tab_ctrl_rds_station = 
+      { ctrl_edit, &edit_rds_station, };
+
+
+struct tab_ctrl_s tab_ctrl_message = 
+      { ctrl_label, &lbl_message, };
+
+struct tab_ctrl_s tab_ctrl_rds_message = 
+      { ctrl_edit, &edit_rds_message, };
+
+
+struct tab_ctrl_s tab_ctrl_ok_fm = 
+      { ctrl_button, &btn_ok_fm, };
+
+
+struct tab_ctrl_s *ctrls_fm[] =
   {
     &tab_ctrl_plain,
-    &tab_ctrl_hdr_gps,
+    &tab_ctrl_hdr_fm,
 
-    &tab_ctrl_datetime,
-    &tab_ctrl_fixqual,
-    &tab_ctrl_fix3d,
-    &tab_ctrl_sats,
+    &tab_ctrl_tx_enab,
 
-    &tab_ctrl_ok_gps,
+    &tab_ctrl_freq,
+
+    &tab_ctrl_station,
+    &tab_ctrl_rds_station,
+
+    &tab_ctrl_message,
+    &tab_ctrl_rds_message,
+
+    &tab_ctrl_ok_fm,
     &tab_ctrl_none, // end of list
   };
 
-struct ctrl_screen_s gps_screen = {
-  ctrls_gps,
-  5, // focus_idx: btn_ok_gps
+struct ctrl_screen_s fm_screen = {
+  ctrls_fm,
+  8, // focus_idx: btn_ok_fm
 };
 
 // *** main app screen ***
@@ -226,7 +247,7 @@ struct label_s lbl_clock;
 struct button_s btn_ip;
 struct button_s btn_display;
 struct button_s btn_offset;
-struct button_s btn_gps;
+struct button_s btn_fm;
 
 struct tab_ctrl_s tab_ctrl_clock = 
       { ctrl_label, &lbl_clock, };
@@ -241,8 +262,8 @@ struct tab_ctrl_s tab_ctrl_display =
 struct tab_ctrl_s tab_ctrl_offset = 
       { ctrl_button, &btn_offset, };
 
-struct tab_ctrl_s tab_ctrl_gps = 
-      { ctrl_button, &btn_gps, };
+struct tab_ctrl_s tab_ctrl_fm = 
+      { ctrl_button, &btn_fm, };
 
 
 struct tab_ctrl_s *ctrls_app[] =
@@ -253,7 +274,7 @@ struct tab_ctrl_s *ctrls_app[] =
     &tab_ctrl_ip,
     &tab_ctrl_display,
     &tab_ctrl_offset,
-    &tab_ctrl_gps,
+    &tab_ctrl_fm,
 
     &tab_ctrl_none, // end of list
   };
@@ -273,9 +294,7 @@ struct ctrl_screen_s *cur_screen = &app_screen;
 void setup_app_screens(void) {
   // *** WiFi screen *** - setup elements
   SetupWindow (&wnd_frame, /*x0*/0, /*y0*/0, tft.width()-1, tft.height()-1, /*border*/1, /*buffered*/0);
-#ifdef ESP32_S3_TFT
-  SetupList (&lst_nets, /*x*/20, /*y*/12, /*text_max_chars*/16, /*visible_count*/4, /*void cb_func(char *)*/&list_selected, /*item_prefix*/NULL);//"WiFi");
-#elif defined HX8357
+#ifdef HX8357
   SetupList (&lst_nets, /*x*/20, /*y*/12, /*text_max_chars*/20, /*visible_count*/10, /*void cb_func(char *)*/&list_selected, /*item_prefix*/NULL);//"WiFi");
 #endif
 
@@ -306,7 +325,6 @@ void setup_app_screens(void) {
 
   SetupButton (&btn_ok_offs, /*x*/80, /*y*/1+LABEL_HEIGHT_PIXELS+1+LABEL_HEIGHT_PIXELS+1+EDIT_HEIGHT_PIXELS+3, "OK", /*void cb_func(void)*/&cb_offs_ok_clicked);
 
-
   // *** Display screen *** - setup elements
 
   //  title
@@ -320,25 +338,28 @@ void setup_app_screens(void) {
   SetupButton (&btn_ok_disp, /*x*/80, /*y*/1+LABEL_HEIGHT_PIXELS+1+LABEL_HEIGHT_PIXELS+1+EDIT_HEIGHT_PIXELS+3, "OK", /*void cb_func(void)*/&cb_disp_ok_clicked);
 
 
-  // *** GPS screen *** - setup elements
+  // *** FM screen *** - setup elements
 
   //  title
-  SetupLabel (&lbl_hdr_gps, /*x*/tft.width()/2-(3*CHAR_WIDTH_PIXELS)/2, /*y*/1, /*max_chars*/3, /*text_default*/"GPS");
+  SetupLabel (&lbl_hdr_fm, /*x*/tft.width()/2-(2*CHAR_WIDTH_PIXELS)/2, /*y*/1, /*max_chars*/3, /*text_default*/"FM");
 
-  //  GPS datetime
-  SetupLabel (&lbl_datetime, /*x*/1, /*y*/36, /*max_chars*/19, /*text_default*/"starting GPS ...");
+  //  Transmit Enable: tx_enab
+  //SetupLabel (&lbl_mhz, /*x*/1, /*y*/36, /*max_chars*/19, /*text_default*/"starting FM ...");
+  SetupCheckBox (&cb_tx_enab, /*x*/1, /*y*/36, /*text_str*/"TX", 1/*checked_default*/, &cb_fm_tx_enab_set/*void cb_func(int check_val)*/);
 
-  //  fix quality
-  SetupLabel (&lbl_fixqual, /*x*/24, /*y*/69, /*max_chars*/8, /*text_default*/"fix: no");
+  //  freq
+  SetupUpDown (&updn_freq, /*x*/60, /*y*/36, /*text_max_chars*/5, NULL/*void cb_func(double sel_val)*/, &cb_fm_freq_set/*void cb_chg_func(double chg_val)*/, /*min_val*/87.5, /*max_val*/108.0, /*dfl_val*/102.3, /*val_step*/0.1, /*val_prec*/1);
 
-  //  fix 3D quality
-  SetupLabel (&lbl_fix3d, /*x*/130, /*y*/69, /*max_chars*/7, /*text_default*/"3D: no");
+  //  station
+  SetupLabel (&lbl_station, /*x*/1, /*y*/69, /*max_chars*/7, /*text_default*/"Station");
+  SetupEdit (&edit_rds_station, /*x*/104, /*y*/1+LABEL_HEIGHT_PIXELS+1+LABEL_HEIGHT_PIXELS+1, /*text_max_chars*/FM_RDS_STATION_MAX, "AdaRadio");
 
-  //  satellite count
-  SetupLabel (&lbl_sats, /*x*/24, /*y*/102, /*max_chars*/7, /*text_default*/"no sats");
+  //  message
+  SetupLabel (&lbl_message, /*x*/1, /*y*/102, /*max_chars*/8, /*text_default*/"Message");
+  SetupEdit (&edit_rds_message, /*x*/1, /*y*/1+LABEL_HEIGHT_PIXELS+1+LABEL_HEIGHT_PIXELS+1+LABEL_HEIGHT_PIXELS+1+LABEL_HEIGHT_PIXELS+1, /*text_max_chars*/FM_RDS_MESSAGE_MAX, "Adafruit g0th Radio!");
 
   // OK
-  SetupButton (&btn_ok_gps, /*x*/140, /*y*/1+LABEL_HEIGHT_PIXELS+1+LABEL_HEIGHT_PIXELS+1+EDIT_HEIGHT_PIXELS+3, "OK", /*void cb_func(void)*/&cb_gps_ok_clicked);
+  SetupButton (&btn_ok_fm, /*x*/140, /*y*/1+LABEL_HEIGHT_PIXELS+1+LABEL_HEIGHT_PIXELS+1+EDIT_HEIGHT_PIXELS+1+EDIT_HEIGHT_PIXELS+1+EDIT_HEIGHT_PIXELS+3, "OK", /*void cb_func(void)*/&cb_fm_ok_clicked);
 
   // *** App screen *** - setup elements
 
@@ -354,20 +375,20 @@ void setup_app_screens(void) {
   //  Offset button
   SetupButton (&btn_offset, /*x horiz*/130, /*y vert*/69, "Offset", /*void cb_func(void)*/&cb_app_offset_clicked);
 
-  //  GPS status / No GPS button
-  SetupButton (&btn_gps, /*x*/24, /*y*/102, "starting GPS", /*void cb_func(void)*/&cb_app_gps_clicked); // force button to be big enough for text
+  //  FM status / No FM button
+  SetupButton (&btn_fm, /*x*/24, /*y*/102, "starting FM", /*void cb_func(void)*/&cb_app_fm_clicked); // force button to be big enough for text
 
   app_settings_get (app_settings);
-  set_net_label (app_settings->ssid);
-
-  SetEdit     (&edit_pass,   app_settings->password);
+  SetCheckBox (&cb_tx_enab, app_settings->tx_enab);
+  SetUpDown   (&updn_freq,  app_settings->freq);
+  SetEdit     (&edit_rds_station,   app_settings->rds_station);
+  SetEdit     (&edit_rds_message,   app_settings->rds_message);
 
   SetUpDown   (&updn_tzone,  app_settings->gmt_offset_hours);
   SetCheckBox (&cb_daylight, app_settings->daylight_observed);
   SetUpDown   (&updn_leapsec,  app_settings->leap_sec);
 
   SetUpDown   (&updn_bright,  app_settings->bright_steps);
-  app_connect();
   ScreenDraw();
 }
 // ---------------------------- Manage list -----------------------------------
@@ -406,7 +427,7 @@ void redraw_list (void) {
 
 void list_selected(char *sel_net) {
   // Accept WiFi network
-  strncpy (app_settings->ssid, sel_net, APP_SETTINGS_STR_MAX);
+//  strncpy (app_settings->ssid, sel_net, APP_SETTINGS_STR_MAX);
   // setup control on next screen with WiFi network name.
   set_net_label (sel_net);
 
@@ -445,10 +466,7 @@ void cb_passwd_ok_clicked (void) {
 
   // Accept WiFi password.
   password = GetEdit(&edit_pass);
-  strncpy (app_settings->password, password, APP_SETTINGS_STR_MAX);
-
-  // start trying to connect.
-  app_connect();
+//  strncpy (app_settings->password, password, APP_SETTINGS_STR_MAX);
 
   // Go to main app screen.
   cur_screen = &app_screen;
@@ -458,19 +476,16 @@ void cb_passwd_ok_clicked (void) {
 void cb_offs_tzone_set (double tzone_hrs) {
  app_settings->gmt_offset_hours = tzone_hrs; 
  app_settings_put (app_settings);
- app_time_set();
 }
 
 void cb_offs_dst_set (int dst_checked) {
  app_settings->daylight_observed = dst_checked; 
  app_settings_put (app_settings);
- app_time_set();
 }
 
 void cb_offs_leapsec_set (double leapsec_in) {
  app_settings->leap_sec = leapsec_in; 
  app_settings_put (app_settings);
- app_time_set();
 }
 
 void cb_offs_ok_clicked (void) {
@@ -491,11 +506,12 @@ void cb_disp_ok_clicked (void) {
   cur_screen = &app_screen;
   ScreenDraw();
 }
-// ---------------------------- GPS Screen functions --------------------------
+// ---------------------------- FM Screen functions --------------------------
+#if 0
 // Set label on this screen.
 // If this screen is showing, and the text changed,
 //  then draw the label.
-void set_gps_v_label (struct label_s *lbl, const char *new_fmt, va_list args) {
+void set_fm_v_label (struct label_s *lbl, const char *new_fmt, va_list args) {
   char new_text[LABEL_MAX_TEXT];
   bool chg;
 
@@ -503,51 +519,46 @@ void set_gps_v_label (struct label_s *lbl, const char *new_fmt, va_list args) {
 
   chg = SetLabel (lbl, new_text);
   //ScreenDraw();
-  if (chg && current_screen_is_gps()) {
+  if (chg && current_screen_is_fm()) {
     DrawLabel (lbl, false/*!has_focus*/);
   }
 }
 
-// Set GPS DateTime label
-void set_gps_datetime_label (const char *new_fmt, ...) {
+// Set FN Freq label
+void set_fm_freq_label (const char *new_fmt, ...) {
   va_list args;
   va_start (args, new_fmt);
-  set_gps_v_label (&lbl_datetime, new_fmt, args);
+  set_fm_v_label (&lbl_freq, new_fmt, args);
   va_end (args);
 }
+#endif
 
-// Set GPS Fix Quality label
-void set_gps_fix_label (const char *new_fmt, ...) {
-  va_list args;
-  va_start (args, new_fmt);
-  set_gps_v_label (&lbl_fixqual, new_fmt, args);
-  va_end (args);
-}
-
-// Set GPS Fix 3D label
-void set_gps_fix3d_label (const char *new_fmt, ...) {
-  va_list args;
-  va_start (args, new_fmt);
-  set_gps_v_label (&lbl_fix3d, new_fmt, args);
-  va_end (args);
-}
-
-// Set GPS Satellites label
-void set_gps_sats_label (const char *new_fmt, ...) {
-  va_list args;
-  va_start (args, new_fmt);
-  set_gps_v_label (&lbl_sats, new_fmt, args);
-  va_end (args);
-}
-
-bool current_screen_is_gps(void) {
-  if (cur_screen == &gps_screen) {
+bool current_screen_is_fm(void) {
+  if (cur_screen == &fm_screen) {
     return true; // we are looking at the screen that shows the GPS details
   }
   return false;
 }
 
-void cb_gps_ok_clicked (void) {
+void cb_fm_tx_enab_set(int check_val) {
+  app_settings->tx_enab = check_val;
+}
+
+void cb_fm_freq_set(double chg_val) {
+  app_settings->freq = chg_val;
+}
+
+void cb_fm_ok_clicked (void) {
+  char *rds_station;
+  char *rds_message;
+
+  // Accept station and message.
+  rds_station = GetEdit(&edit_rds_station);
+  strncpy (app_settings->rds_station, rds_station, APP_SETTINGS_STR_MAX);
+
+  rds_message = GetEdit(&edit_rds_message);
+  strncpy (app_settings->rds_message, rds_message, APP_SETTINGS_STR_MAX);
+
   // Go to main app screen.
   cur_screen = &app_screen;
   ScreenDraw();
@@ -573,110 +584,14 @@ bool current_screen_is_app(void) {
   return false;
 }
 
-void app_connect(void) {
-#ifdef USE_WIFI
-  // Connect to Wi-Fi
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(app_settings->ssid, app_settings->password);
-  set_ip_btn ("Connecting");
-#endif
-}
-
-bool is_wifi_connected(void) {
-#ifdef USE_WIFI
-  if (WiFi.status() == WL_CONNECTED) {
-    return true;
-  }
-#endif
-  return false;
-}
-bool wifi_has_ip(void) {
-#ifdef USE_WIFI
-  IPAddress my_ip_addr;
-
-  my_ip_addr = WiFi.localIP();
-  if (my_ip_addr[0] == 0 &&
-      my_ip_addr[1] == 0 &&
-      my_ip_addr[2] == 0 &&
-      my_ip_addr[3] == 0) {
-    return false;
-  }
-  return true;
-#else // not defined USE_WIFI
-  return false; // has no IP
-#endif
-}
-
-const char* ntpServer = "pool.ntp.org";
-void app_time_set (void) {
-  double tzone_hr;
-  int gmtOffset_sec;
-  int dst_checked;
-  int daylightOffset_sec = 0;
-
-  tzone_hr = app_settings->gmt_offset_hours;//GetUpDown(&updn_tzone);
-  gmtOffset_sec = tzone_hr * 3600; // convert FROM: hours offset TO: seconds offset
-
-  dst_checked = app_settings->daylight_observed;//GetCheckBox(&cb_daylight);
-  if (dst_checked) {
-    daylightOffset_sec = 3600; // 1 hour
-  }
-
-#ifdef USE_WIFI
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-#endif
-}
-
-int was_connected = 0;//-1; // force 'NO WiFi', 'NO IP' or ip address to be set
-int had_ip = 0;//-1;        // force 'NO WiFi', 'NO IP' or ip address to be set
-bool did_init = false;
-
 void app_update(void) {
-  bool is_connected;
-  bool has_ip = false;
-
-  if (!did_init) {
-    app_connect(); // wait until now to do initial connection?
+  if (!fm_found) {
+    set_app_fm_btn("NO FM");
+  } else if (!app_settings->tx_enab) {
+    set_app_fm_btn("FM Off");
+  } else {
+    set_app_fm_btn("FM %.1f", app_settings->freq);
   }
-
-  is_connected = is_wifi_connected();
-  if (is_connected) {
-    has_ip = wifi_has_ip();
-  }
-  //Serial.print("app_update did_init: ");
-  //Serial.print(did_init);
-  //Serial.print(", was_connected: ");
-  //Serial.print(was_connected);
-  //Serial.print(", is_connected: ");
-  //Serial.print(is_connected);
-  //Serial.print(", has_ip: ");
-  //Serial.println(has_ip);
-#ifdef USE_WIFI
-  if ((!did_init || !was_connected) && is_connected) {
-    if ((!did_init || !had_ip) && has_ip) {
-      IPAddress my_ip_addr;
-
-      my_ip_addr = WiFi.localIP();
-      set_ip_btn ("%d.%d.%d.%d", my_ip_addr[0], my_ip_addr[1], my_ip_addr[2], my_ip_addr[3]);
-
-      // save successful WiFi ssid and password.
-      app_settings_put (app_settings);
-#ifdef OTA_UPDATE
-      over_the_air_update_setup ();
-#endif
-      app_time_set();
-    }
-    if ((!did_init || had_ip) && !has_ip) {
-      set_ip_btn ("NO IP");
-    }
-  }
-#endif
-  if ((!did_init || was_connected) && !is_connected) {
-    set_ip_btn ("NO WiFi");
-  }
-  was_connected = is_connected;
-  had_ip        = has_ip;
-  did_init      = true;
 }
 
 void cb_app_ip_clicked (void) {
@@ -697,14 +612,14 @@ void cb_app_display_clicked (void) {
   ScreenDraw();
 }
 
-void cb_app_gps_clicked (void) {
-  // Change to GPS screen.
-  cur_screen = &gps_screen;
+void cb_app_fm_clicked (void) {
+  // Change to FM screen.
+  cur_screen = &fm_screen;
   ScreenDraw();
 }
 
-// Set text on GPS button
-void set_app_gps_btn (const char *new_fmt, ...) {
+// Set text on FM button
+void set_app_fm_btn (const char *new_fmt, ...) {
   char new_text[BUTTON_MAX_LABEL];
   bool chg;
 
@@ -713,9 +628,9 @@ void set_app_gps_btn (const char *new_fmt, ...) {
   vsnprintf (new_text, BUTTON_MAX_LABEL, new_fmt, args);
   va_end (args);
 
-  chg = SetButtonText (&btn_gps, new_text);
+  chg = SetButtonText (&btn_fm, new_text);
   //ScreenDraw();
   if (chg && current_screen_is_app()) {
-    ScreenRedrawCtrl (&tab_ctrl_gps);
+    ScreenRedrawCtrl (&tab_ctrl_fm);
   }
 }

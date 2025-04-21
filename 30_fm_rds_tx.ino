@@ -4,6 +4,9 @@
 # include <Adafruit_Si4713.h>
 #endif
 
+#define FM_RDS_STATION_MAX 8
+#define FM_RDS_MESSAGE_MAX 32
+
 #define FM_RESETPIN 12
 #define FMSTATION 10230      // 10230 == 102.30 MHz
 

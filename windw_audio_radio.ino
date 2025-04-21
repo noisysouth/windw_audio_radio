@@ -1,26 +1,6 @@
-/*
- *  This sketch demonstrates how to scan WiFi networks.
- *  The API is based on the Arduino WiFi Shield library, but has significant changes as newer WiFi functions are supported.
- *  E.g. the return value of `encryptionType()` different because more modern encryption is supported.
- */
-#ifdef ESP8266
-#  include <ESP8266WiFi.h>
-#elif defined ESP32
-#  include "WiFi.h"
-#else
- // No WiFi on other boards
-#endif
-
-// Store last WiFi ssid and password. Docs: https://randomnerdtutorials.com/esp32-save-data-permanently-preferences/
-//#include <Preferences.h>
-
-//#define OTA_UPDATE
-#ifdef OTA_UPDATE
-// Over-the-air updates ('OTA'): https://lastminuteengineers.com/esp32-ota-updates-arduino-ide/
-# include <ESPmDNS.h>
-# include <WiFiUdp.h>
-# include <ArduinoOTA.h>
-#endif
+// window_audio_radio
+// This is the main entry setup() and loop() functions for the app.
+// Other sub-modules are called from here.
 
 #include "my_tft.h"
 
@@ -34,18 +14,12 @@ void setup()
   setup_tft();
   setup_app_screens();
 
-  setup_input_esp32_button();
-
   setup_mp3_audio();
   setup_fm_tx();
 
   Wire.begin();        // join i2c bus (address optional for master)
   setup_input_gamepad();
-  setup_gps();
 
-  setup_wifi();
-
-  //sevenseg_setup();
   Serial.println("Setup done");
 }
 
@@ -54,7 +28,7 @@ bool  do_click  = false;
 bool was_click  = false;
 
 bool  do_unclick = false;
-int until_scan = 0;
+//int until_scan = 0;
 int until_io = 0;
 void loop()
 {
@@ -64,22 +38,22 @@ void loop()
 
   if (until_io <= 0) {
     do_unclick = false;
-
-    if (current_screen_is_wifi()) {
+#if 0
+    if (current_screen_is_radio()) {
       if (until_scan <= 0) {
-        loop_wifi_scan(); // do a scan
+        loop_radio_scan(); // do a scan
         until_scan = 50; // Wait a bit before scanning again.
       }
       until_scan--;
-    } else { // !current_screen_is_wifi()
+    } else { // !current_screen_is_radio()
       // looking at some other screen
-      until_scan = 50; // if we return to the wifi screen, wait before scanning again.
+      until_scan = 50; // if we return to the radio screen, wait before scanning again.
     }
+#endif
     if (current_screen_is_app()) {
       app_update();
     }
 
-    loop_input_esp32_button();
     loop_input_gamepad();
     kb_in = loop_input_cardkb();
 
@@ -89,19 +63,8 @@ void loop()
   }
   until_io--;
 
-#ifdef OTA_UPDATE
-  if (is_wifi_connected() && wifi_has_ip()) {
-    over_the_air_update_loop();
-  } else {
-    delay(10);
-  }
-#else
   //delay(10);
   delay(100);
-#endif
-
-  loop_gps();
-  //sevenseg_loop();
 
   //Serial.println("loop() end");
 }

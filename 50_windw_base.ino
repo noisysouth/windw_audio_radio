@@ -12,7 +12,6 @@ enum color_e {
   color_red = ST77XX_RED,
   color_magenta = ST77XX_MAGENTA,
 #elif defined HX8357
-//#ifdef HX8357
   color_black = HX8357_BLACK,
   color_white = HX8357_WHITE,
   color_blue = HX8357_BLUE,
